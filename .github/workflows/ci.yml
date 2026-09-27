@@ -23,6 +23,41 @@ jobs:
       - name: Сборка и тесты
         working-directory: backend
         run: ./gradlew --no-daemon build
+      - name: Итоги тестов
+        if: always()
+        working-directory: backend
+        run: |
+          python3 - "$GITHUB_STEP_SUMMARY" <<'PY'
+          import glob, sys, xml.etree.ElementTree as ET
+
+          total = failures = errors = skipped = 0
+          files = glob.glob("build/test-results/test/*.xml")
+          for path in files:
+              root = ET.parse(path).getroot()
+              total += int(root.get("tests", 0))
+              failures += int(root.get("failures", 0))
+              errors += int(root.get("errors", 0))
+              skipped += int(root.get("skipped", 0))
+
+          with open(sys.argv[1], "a", encoding="utf-8") as out:
+              out.write("### Тесты бэкенда\n\n")
+              if files:
+                  out.write(f"Всего: {total}, провалов: {failures}, ошибок: {errors}, пропущено: {skipped}\n")
+              else:
+                  out.write("Результаты не найдены — тесты не запускались\n")
+          PY
+      - name: Проверка, что интеграционные тесты действительно выполнились
+        working-directory: backend
+        run: |
+          executed=$(python3 -c "
+          import glob, xml.etree.ElementTree as ET
+          print(sum(int(ET.parse(p).getroot().get('tests', 0)) for p in glob.glob('build/test-results/test/*.xml')))
+          ")
+          echo "выполнено тестов: $executed"
+          if [ "$executed" -lt 7 ]; then
+            echo "::error::Ожидалось минимум 7 интеграционных тестов, выполнено $executed — проверьте, не пропускаются ли они"
+            exit 1
+          fi
 
   frontend:
     name: Фронтенд — типы и сборка
