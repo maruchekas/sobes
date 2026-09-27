@@ -2,12 +2,13 @@
 build/
 out/
 target/
-!gradle/wrapper/gradle-wrapper.jar
 
 # Java и Kotlin
 .gradle/
 *.class
 *.jar
+# Обёртка Gradle обязана лежать в репозитории: без её jar не соберутся ни CI, ни Docker
+!gradle/wrapper/gradle-wrapper.jar
 !.mvn/wrapper/maven-wrapper.jar
 
 # Node
