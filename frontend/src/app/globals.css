@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: oklch(0.97 0.02 220);
+  --color-brand-500: oklch(0.62 0.13 220);
+  --color-brand-600: oklch(0.54 0.14 220);
+  --color-brand-700: oklch(0.46 0.13 220);
+  --color-ink-900: oklch(0.22 0.02 250);
+  --color-ink-600: oklch(0.45 0.02 250);
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  @apply bg-white text-ink-900 antialiased dark:bg-ink-900 dark:text-white;
+}
+
+.prose-answer {
+  @apply whitespace-pre-line leading-relaxed text-ink-600 dark:text-brand-50;
+}
