@@ -1,0 +1,33 @@
+# Сборка
+build/
+out/
+target/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Java и Kotlin
+.gradle/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node
+node_modules/
+.next/
+npm-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+
+# Окружение и секреты
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# ОС
+.DS_Store
+Thumbs.db

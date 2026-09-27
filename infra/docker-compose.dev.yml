@@ -1,0 +1,16 @@
+name: sobes-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sobes
+      POSTGRES_USER: sobes
+      POSTGRES_PASSWORD: sobes
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+
+volumes:
+  pgdata-dev:
