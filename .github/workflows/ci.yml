@@ -22,7 +22,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Сборка и тесты
         working-directory: backend
-        run: ./gradlew --no-daemon build
+        run: ./gradlew --no-daemon build 2>&1 | tee build-output.log
+      - name: Причина падения в аннотации
+        if: failure()
+        working-directory: backend
+        run: |
+          grep -E "^e: |error:|FAILED|AssertionError" build-output.log | head -20 | while IFS= read -r line; do
+            echo "::error::${line:0:500}"
+          done
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          for path in glob.glob("build/test-results/test/*.xml"):
+              root = ET.parse(path).getroot()
+              for tc in root.iter("testcase"):
+                  for fail in list(tc.iter("failure")) + list(tc.iter("error")):
+                      msg = (fail.get("message") or "")[:400].replace("\n", " ")
+                      print(f"::error::{tc.get('classname','?').split('.')[-1]}.{tc.get('name','?')}: {msg}")
+          PY
       - name: Итоги тестов
         if: always()
         working-directory: backend
