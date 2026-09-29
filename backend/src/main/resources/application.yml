@@ -43,3 +43,10 @@ springdoc:
 logging:
   level:
     ru.sobes: INFO
+
+sobes:
+  telegram:
+    bot-token: ${TELEGRAM_BOT_TOKEN:}
+  jwt:
+    secret: ${JWT_SECRET:}
+    ttl-hours: 720
