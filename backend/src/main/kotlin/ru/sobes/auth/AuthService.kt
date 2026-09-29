@@ -16,10 +16,12 @@ class AuthService(
     fun loginByTelegram(params: Map<String, String>): LoginResponse {
         val auth = verifier.verify(params)
 
-        val account = telegramAccounts.findByTelegramId(auth.id)
+        val existing = telegramAccounts.findByTelegramId(auth.id)
         val user: User
-        if (account != null) {
-            user = users.getReferenceById(account.userId)
+        val account: TelegramAccount
+        if (existing != null) {
+            user = users.getReferenceById(existing.userId)
+            account = existing
             // Обновляем свежие данные из Telegram.
             account.username = auth.username
             user.lastSeenAt = Instant.now()
@@ -29,7 +31,7 @@ class AuthService(
             user = users.save(
                 User(displayName = displayName(auth).ifBlank { "Пользователь ${auth.id}" })
             )
-            telegramAccounts.save(
+            account = telegramAccounts.save(
                 TelegramAccount(
                     userId = user.id,
                     telegramId = auth.id,
