@@ -9,7 +9,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 /** CORS для браузерных вызовов API (фронт на отдельном-origin в dev и проде). */
 @Configuration
 class CorsConfig(
-    @Value("\${sobes.cors.allowed-origins:http://localhost:3000}") private val allowedOrigins: String,
+    // Локальная разработка: браузер ходит на sobes.localhost.dev (hosts-запись для Telegram Login Widget).
+    @Value("\${sobes.cors.allowed-origins:http://localhost:3000,http://sobes.localhost.dev:3000}") private val allowedOrigins: String,
 ) {
     @Bean
     fun corsConfigurer(): WebMvcConfigurer = object : WebMvcConfigurer {
