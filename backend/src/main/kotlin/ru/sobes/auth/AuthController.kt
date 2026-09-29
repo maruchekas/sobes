@@ -29,4 +29,9 @@ class AuthController(private val authService: AuthService) {
     @ExceptionHandler(UnauthorizedException::class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     fun unauthorized() = mapOf("error" to "unauthorized")
+
+    /** Неверная подпись/устаревшие данные виджета — 400, а не 500. */
+    @ExceptionHandler(IllegalArgumentException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun badRequest(e: IllegalArgumentException) = mapOf("error" to (e.message ?: "bad_request"))
 }
