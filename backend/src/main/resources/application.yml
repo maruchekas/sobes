@@ -1,4 +1,10 @@
 spring:
+  config:
+    # Локально секреты лежат в корневом .env.local (Git его игнорирует).
+    # Два пути поддерживают запуск как из корня, так и из backend/.
+    import:
+      - "optional:file:.env.local[.properties]"
+      - "optional:file:../.env.local[.properties]"
   application:
     name: sobes-backend
   datasource:

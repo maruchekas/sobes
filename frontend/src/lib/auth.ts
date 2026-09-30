@@ -17,6 +17,9 @@ const TOKEN_KEY = "sobes_token";
 
 export const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? "";
 
+const telegramBotId = Number(process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID ?? "");
+export const BOT_ID = Number.isSafeInteger(telegramBotId) && telegramBotId > 0 ? telegramBotId : null;
+
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);

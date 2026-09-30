@@ -50,15 +50,20 @@ flowchart LR
 Нужны JDK 21, Node.js 22+ и Docker.
 
 ```bash
-# 1. База данных для разработки
+# 1. Локальная конфигурация (один раз; оба файла игнорируются Git)
+cp .env.example .env.local
+cp frontend/.env.example frontend/.env.local
+# Заполните TELEGRAM_BOT_TOKEN, JWT_SECRET и публичные настройки фронтенда.
+
+# 2. База данных для разработки
 docker compose -f infra/docker-compose.dev.yml up -d
 
-# 2. Бэкенд (миграции применяются автоматически)
+# 3. Бэкенд (миграции применяются автоматически, .env.local загрузится сам)
 cd backend && ./gradlew bootRun
 # API:    http://localhost:8080/api/v1/questions
 # Swagger: http://localhost:8080/swagger-ui.html
 
-# 3. Фронтенд
+# 4. Фронтенд
 cd frontend && npm install && npm run dev
 # http://localhost:3000
 ```
@@ -67,12 +72,13 @@ cd frontend && npm install && npm run dev
 
 ```bash
 cd infra
-export POSTGRES_PASSWORD=$(openssl rand -base64 24)
-export DOMAIN=sobes.example
+cp .env.example .env
+# Заполните .env: POSTGRES_PASSWORD, TELEGRAM_BOT_TOKEN, JWT_SECRET и DOMAIN.
 docker compose up -d --build
 ```
 
-Caddy сам получит сертификат Let's Encrypt. Домен передаётся в `Caddyfile` через переменную `DOMAIN`.
+Caddy сам получит сертификат Let's Encrypt. Файл `infra/.env` игнорируется Git и передаёт
+секреты контейнерам через Docker Compose; коммитить его не нужно.
 
 ## Структура репозитория
 

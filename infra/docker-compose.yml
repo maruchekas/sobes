@@ -27,6 +27,8 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/sobes
       DB_USER: sobes
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN обязателен}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET обязателен}
     expose:
       - "8080"
     mem_limit: 900m

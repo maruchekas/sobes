@@ -5,10 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Primary
 import org.springframework.core.env.Environment
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
@@ -24,18 +21,17 @@ import kotlin.test.assertTrue
 /**
  * Интеграционные тесты входа через Telegram Login Widget.
  * Подпись HMAC считается так же, как её считает Telegram (см. TelegramLoginVerifier),
- * на тестовом bot-token, подменённом через TestConfiguration.
+ * на тестовом bot-token, заданном через свойства тестового контекста.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = [
+        "sobes.telegram.bot-token=123456:TEST-token-for-integration-tests",
+        "sobes.jwt.secret=test-jwt-secret-at-least-32-characters-long",
+    ],
+)
 @Testcontainers(disabledWithoutDocker = true)
 class AuthApiTest {
-
-    @TestConfiguration
-    class AuthTestConfig {
-        @Bean
-        @Primary
-        fun testVerifier(): TelegramLoginVerifier = TelegramLoginVerifier(botToken = TEST_BOT_TOKEN)
-    }
 
     @Autowired
     private lateinit var env: Environment
