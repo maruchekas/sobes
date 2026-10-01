@@ -30,6 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/questions" className="hover:text-brand-600">
                 Вопросы
               </Link>
+              <Link href="/practice" className="font-medium text-brand-600 hover:text-brand-700">
+                Практика
+              </Link>
               <AuthButton />
               <a
                 href="https://github.com/maruchekas/sobes"
