@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { clearSession, fetchMe, getToken } from "@/lib/auth";
 import type { UserView } from "@/lib/auth";
 
-/** Индикатор сессии для хедера: «…» / «Войти» / «Имя · выйти». */
+/** Индикатор сессии для хедера: «…» / «Войти» / имя-ссылка в кабинет. */
 export function AuthButton() {
-  const router = useRouter();
   const [user, setUser] = useState<UserView | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,18 +28,9 @@ export function AuthButton() {
 
   if (user) {
     return (
-      <button
-        type="button"
-        onClick={() => {
-          clearSession();
-          setUser(null);
-          router.refresh();
-        }}
-        className="text-sm font-medium text-ink-600 hover:text-brand-600 dark:text-brand-50"
-        title="Выйти"
-      >
-        {user.displayName} · выйти
-      </button>
+      <a href="/me" className="text-sm font-medium text-ink-600 hover:text-brand-600 dark:text-brand-50" title="Личный кабинет">
+        {user.displayName}
+      </a>
     );
   }
 
