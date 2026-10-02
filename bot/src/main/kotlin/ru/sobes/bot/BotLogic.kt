@@ -98,4 +98,14 @@ class BotLogic(
             """{"inline_keyboard":[[{"text":"Привязать аккаунт","url":"$linkUrl"}]]}"""
         )
     }
+
+    /** Доставка «вопроса дня» (вызывается из digest-потока Main.kt). */
+    fun sendDailyQuestion(chatId: Long, questionBody: String, answerUrl: String) {
+        val text = "\uD83C\uDFAF Вопрос дня\n\n" + questionBody + "\n\nПодумай над ответом, затем сверься с эталоном:"
+        telegram.sendMessage(
+            chatId,
+            text,
+            """{"inline_keyboard":[[{"text":"Открыть ответ","url":"$answerUrl"}]]}"""
+        )
+    }
 }

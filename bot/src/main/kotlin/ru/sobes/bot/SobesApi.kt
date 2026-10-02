@@ -7,7 +7,10 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 /** Клиент публичного REST API платформы Sobes. */
-class SobesApi(private val baseUrl: String) {
+class SobesApi(
+    private val baseUrl: String,
+    private val botSecret: String,
+) {
 
     private val http = HttpClient.newHttpClient()
 
@@ -17,6 +20,7 @@ class SobesApi(private val baseUrl: String) {
         val request = HttpRequest.newBuilder()
             .uri(URI.create("$baseUrl/api/v1/bot/internal/lookup"))
             .header("Content-Type", "application/json")
+            .header("X-Bot-Secret", botSecret)
             .POST(HttpRequest.BodyPublishers.ofString(body))
             .build()
         val response = http.send(request, HttpResponse.BodyHandlers.ofString())
@@ -34,6 +38,7 @@ class SobesApi(private val baseUrl: String) {
         val request = HttpRequest.newBuilder()
             .uri(URI.create("$baseUrl/api/v1/bot/internal/link-token"))
             .header("Content-Type", "application/json")
+            .header("X-Bot-Secret", botSecret)
             .POST(HttpRequest.BodyPublishers.ofString(body))
             .build()
         val response = http.send(request, HttpResponse.BodyHandlers.ofString())
@@ -43,4 +48,34 @@ class SobesApi(private val baseUrl: String) {
         val json = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().readTree(response.body())
         return json["linkUrl"].asText()
     }
+
+    /** Пачка дайджестов «вопрос дня» для рассылки (может быть пустой). */
+    fun dailyDigest(limit: Int = 50): List<DailyDigest> {
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create("$baseUrl/api/v1/bot/internal/daily-digest?limit=$limit"))
+            .header("X-Bot-Secret", botSecret)
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .build()
+        val response = http.send(request, HttpResponse.BodyHandlers.ofString())
+        if (response.statusCode() == 401) return emptyList() // секрет не принят — ретраится позже
+        if (response.statusCode() != 200) {
+            throw IllegalStateException("daily-digest -> ${response.statusCode()}: ${response.body().take(200)}")
+        }
+        val json = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().readTree(response.body())
+        return json.map { node ->
+            DailyDigest(
+                telegramId = node["telegramId"].asLong(),
+                questionId = node["questionId"].asLong(),
+                questionBody = node["questionBody"].asText(),
+                answerUrl = node["answerUrl"].asText(),
+            )
+        }
+    }
 }
+
+data class DailyDigest(
+    val telegramId: Long,
+    val questionId: Long,
+    val questionBody: String,
+    val answerUrl: String,
+)

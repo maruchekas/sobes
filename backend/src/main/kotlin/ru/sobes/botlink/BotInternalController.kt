@@ -20,6 +20,7 @@ class BotInternalController(
     private val telegramAccounts: TelegramAccountRepository,
     private val linkService: BotLinkService,
     @Value("\${sobes.bot.internal-secret:}") private val internalSecret: String,
+    @Value("\${sobes.web-base-url}") private val webBase: String,
 ) {
 
     @PostMapping("/lookup")
@@ -39,7 +40,6 @@ class BotInternalController(
         @RequestBody body: LookupRequest,
     ): Map<String, String> {
         checkSecret(secret)
-        val webBase = "http://localhost:3000" // TODO(SOBES-35): SOBES_WEB_BASE_URL из env
         val url = linkService.issueLink(body.telegramId, webBase)
         return mapOf("linkUrl" to url)
     }
