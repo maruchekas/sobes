@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { fetchQuestion } from "@/lib/api";
 import { DIFFICULTY_LABELS } from "@/lib/types";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://wisereport.online";
+
 interface Params {
   params: Promise<{ id: string }>;
 }
@@ -19,6 +21,22 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return {
     title: question.body.slice(0, 70),
     description: question.answer.slice(0, 160),
+    alternates: {
+      canonical: `${SITE_URL}/questions/${id}`,
+    },
+    openGraph: {
+      type: "article",
+      title: question.body.slice(0, 100),
+      description: question.answer.slice(0, 200),
+      url: `${SITE_URL}/questions/${id}`,
+      siteName: "Sobes",
+      locale: "ru_RU",
+    },
+    twitter: {
+      card: "summary",
+      title: question.body.slice(0, 70),
+      description: question.answer.slice(0, 160),
+    },
   };
 }
 
@@ -30,8 +48,29 @@ export default async function QuestionPage({ params }: Params) {
     notFound();
   }
 
+  // Структурированные данные для поисковиков: вопрос + принятый ответ (QAPage).
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "QAPage",
+    mainEntity: {
+      "@type": "Question",
+      name: question.body,
+      text: question.body,
+      answerCount: 1,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: question.answer.slice(0, 5000),
+        url: `${SITE_URL}/questions/${id}`,
+      },
+    },
+  };
+
   return (
     <article className="space-y-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <nav className="text-sm">
         <Link href="/questions" className="text-brand-600 hover:underline">
           ← Все вопросы
