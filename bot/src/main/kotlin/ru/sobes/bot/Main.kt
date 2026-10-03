@@ -12,11 +12,11 @@ fun main() {
     val digestIntervalSec = System.getenv("DIGEST_INTERVAL_SEC")?.toLongOrNull() ?: 60L
 
     val api = SobesApi(apiBase, botSecret)
-    val bot = BotLogic(TelegramClient(token), api)
+    val webBaseUrl = System.getenv("WEB_BASE_URL") ?: "http://localhost:3000"
+    val bot = BotLogic(TelegramClient(token), api, webBaseUrl)
     Runtime.getRuntime().addShutdownHook(Thread { bot.stop() })
 
     // Рассылка «вопрос дня» + напоминания о повторениях: backend сам решает, кому пора.
-    val webBase = System.getenv("WEB_BASE_URL") ?: "http://localhost:3000"
     val digestThread = Thread {
         while (!Thread.currentThread().isInterrupted) {
             try {
@@ -36,7 +36,7 @@ fun main() {
                 val reminders = api.reviewReminders()
                 for (r in reminders) {
                     runCatching {
-                        bot.sendReviewReminder(r.telegramId, r.dueCount, r.oldestDueHours, "$webBase/practice")
+                        bot.sendReviewReminder(r.telegramId, r.dueCount, r.oldestDueHours, "$webBaseUrl/practice")
                     }.onFailure {
                         log.warn("reminder {}: не доставлен ({})", r.telegramId, it.message)
                     }
