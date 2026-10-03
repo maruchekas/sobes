@@ -99,6 +99,23 @@ class BotLogic(
         )
     }
 
+    /** Доставка напоминания о просроченных повторениях. */
+    fun sendReviewReminder(chatId: Long, dueCount: Int, oldestDueHours: Long, practiceUrl: String) {
+        val oldest = when {
+            oldestDueHours >= 24 -> "самое старое ждёт больше суток"
+            oldestDueHours >= 1 -> "самое старое ждёт $oldestDueHours ч"
+            else -> "самое старое ждёт меньше часа"
+        }
+        val text = "\u23F0 Просроченные повторения\n\n" +
+            "Накопилось карточек: $dueCount ($oldest).\n" +
+            "Разгреби очередь — SM-2 любит регулярность:"
+        telegram.sendMessage(
+            chatId,
+            text,
+            """{"inline_keyboard":[[{"text":"К практике","url":"$practiceUrl"}]]}"""
+        )
+    }
+
     /** Доставка «вопроса дня» (вызывается из digest-потока Main.kt). */
     fun sendDailyQuestion(chatId: Long, questionBody: String, answerUrl: String) {
         val text = "\uD83C\uDFAF Вопрос дня\n\n" + questionBody + "\n\nПодумай над ответом, затем сверься с эталоном:"

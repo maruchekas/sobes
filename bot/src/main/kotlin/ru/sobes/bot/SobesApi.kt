@@ -71,6 +71,27 @@ class SobesApi(
             )
         }
     }
+    /** Пачка напоминаний о просроченных повторениях. */
+    fun reviewReminders(limit: Int = 50): List<ReviewReminder> {
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create("$baseUrl/api/v1/bot/internal/review-reminders?limit=$limit"))
+            .header("X-Bot-Secret", botSecret)
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .build()
+        val response = http.send(request, HttpResponse.BodyHandlers.ofString())
+        if (response.statusCode() == 401) return emptyList()
+        if (response.statusCode() != 200) {
+            throw IllegalStateException("review-reminders -> ${response.statusCode()}: ${response.body().take(200)}")
+        }
+        val json = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().readTree(response.body())
+        return json.map { node ->
+            ReviewReminder(
+                telegramId = node["telegramId"].asLong(),
+                dueCount = node["dueCount"].asInt(),
+                oldestDueHours = node["oldestDueHours"].asLong(),
+            )
+        }
+    }
 }
 
 data class DailyDigest(
@@ -78,4 +99,10 @@ data class DailyDigest(
     val questionId: Long,
     val questionBody: String,
     val answerUrl: String,
+)
+
+data class ReviewReminder(
+    val telegramId: Long,
+    val dueCount: Int,
+    val oldestDueHours: Long,
 )

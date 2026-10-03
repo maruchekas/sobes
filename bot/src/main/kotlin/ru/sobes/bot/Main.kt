@@ -15,7 +15,8 @@ fun main() {
     val bot = BotLogic(TelegramClient(token), api)
     Runtime.getRuntime().addShutdownHook(Thread { bot.stop() })
 
-    // Рассылка «вопрос дня»: backend сам решает, кому пора (таймзоны, время из кабинета).
+    // Рассылка «вопрос дня» + напоминания о повторениях: backend сам решает, кому пора.
+    val webBase = System.getenv("WEB_BASE_URL") ?: "http://localhost:3000"
     val digestThread = Thread {
         while (!Thread.currentThread().isInterrupted) {
             try {
@@ -30,6 +31,19 @@ fun main() {
                 if (digests.isNotEmpty()) log.info("digest: доставлено {}", digests.size)
             } catch (e: Exception) {
                 log.warn("digest poll failed: {}", e.message)
+            }
+            try {
+                val reminders = api.reviewReminders()
+                for (r in reminders) {
+                    runCatching {
+                        bot.sendReviewReminder(r.telegramId, r.dueCount, r.oldestDueHours, "$webBase/practice")
+                    }.onFailure {
+                        log.warn("reminder {}: не доставлен ({})", r.telegramId, it.message)
+                    }
+                }
+                if (reminders.isNotEmpty()) log.info("reminders: доставлено {}", reminders.size)
+            } catch (e: Exception) {
+                log.warn("reminder poll failed: {}", e.message)
             }
             Thread.sleep(digestIntervalSec * 1000)
         }
