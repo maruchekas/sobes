@@ -74,6 +74,22 @@ class SobesApi(
         return post("/api/v1/bot/internal/answer", body).statusCode() == 200
     }
 
+    /** Статистика юзера для /stats (null — не привязан). */
+    fun stats(telegramId: Long): BotStats? {
+        val resp = post("/api/v1/bot/internal/stats", """{"telegramId":$telegramId}""")
+        if (resp.statusCode() == 404) return null
+        val json = checkOk("stats", resp)
+        return BotStats(
+            answeredTotal = json["answeredTotal"].asLong(),
+            streakDays = json["streakDays"].asInt(),
+            readinessPercent = json["readinessPercent"].asInt(),
+            startedQuestions = json["startedQuestions"].asLong(),
+            weakestTopics = json["weakestTopics"].map { t ->
+                WeakestTopic(t["title"].asText(), t["confidencePercent"].asInt())
+            },
+        )
+    }
+
     // ── инфраструктура ──────────────────────────────────────────────
 
     private fun post(path: String, body: String): HttpResponse<String> {
@@ -112,4 +128,17 @@ data class BotCard(
     val body: String,
     val category: String,
     val difficulty: String,
+)
+
+data class BotStats(
+    val answeredTotal: Long,
+    val streakDays: Int,
+    val readinessPercent: Int,
+    val startedQuestions: Long,
+    val weakestTopics: List<WeakestTopic>,
+)
+
+data class WeakestTopic(
+    val title: String,
+    val confidencePercent: Int,
 )
