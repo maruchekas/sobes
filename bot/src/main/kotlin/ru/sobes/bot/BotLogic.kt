@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 class BotLogic(
     private val telegram: TelegramClient,
     private val api: SobesApi,
+    private val webBaseUrl: String = "http://localhost:3000",
 ) {
     private val log = LoggerFactory.getLogger("bot")
     private val offset = AtomicLong(0)
@@ -37,6 +38,11 @@ class BotLogic(
     fun stop() = running.set(false)
 
     private fun handle(update: JsonNode) {
+        val callback = update["callback_query"]
+        if (callback != null && !callback.isNull) {
+            onCallback(callback)
+            return
+        }
         val message = update["message"] ?: return
         val chatId = message["chat"]["id"].asLong()
         val from = message["from"]
@@ -45,11 +51,15 @@ class BotLogic(
 
         when {
             text == "/start" -> onStart(chatId, telegramId, from)
+            text == "/practice" -> onPractice(chatId, telegramId)
+            text == "/stats" -> onStats(chatId, telegramId)
             text == "/help" -> telegram.sendMessage(
                 chatId,
                 "Sobes — подготовка к собеседованиям.\n\n" +
                     "/start — привязать аккаунт сайта\n" +
-                    "Скоро: вопрос дня и напоминания о повторениях."
+                    "/practice — потренироваться прямо здесь\n" +
+                    "/stats — твой прогресс\n" +
+                    "Ежедневно: вопрос дня и напоминания о повторениях."
             )
             else -> telegram.sendMessage(chatId, "Пока понимаю только /start и /help 🙂")
         }
@@ -124,5 +134,94 @@ class BotLogic(
             text,
             """{"inline_keyboard":[[{"text":"Открыть ответ","url":"$answerUrl"}]]}"""
         )
+    }
+    /** /practice: выдать карточку с кнопками самооценки. */
+    private fun onPractice(chatId: Long, telegramId: Long) {
+        val card = try {
+            api.nextCard(telegramId)
+        } catch (e: Exception) {
+            log.warn("next-card: {}", e.message)
+            null
+        }
+        if (card == null) {
+            telegram.sendMessage(
+                chatId,
+                "Сначала привяжи аккаунт: /start\n\nЕсли уже привязан — очередь пуста, все карточки закрыты. Отличная работа!"
+            )
+            return
+        }
+        val keyboard =
+            """{"inline_keyboard":[[{"text":"\uD83D\uDD01 Не помню","callback_data":"ans:AGAIN:${card.questionId}"},{"text":"\uD83D\uDE41 Трудно","callback_data":"ans:HARD:${card.questionId}"},{"text":"\uD83D\uDE42 Норм","callback_data":"ans:GOOD:${card.questionId}"},{"text":"\uD83D\uDE00 Легко","callback_data":"ans:EASY:${card.questionId}"}]]}"""
+        telegram.sendMessage(
+            chatId,
+            "\uD83E\uDDEF ${card.category} · ${card.difficulty}\n\n${card.body}\n\nКак ты оцениваешь свой ответ?",
+            keyboard
+        )
+    }
+
+    /** /stats: сводка прогресса. */
+    private fun onStats(chatId: Long, telegramId: Long) {
+        val s = try {
+            api.stats(telegramId)
+        } catch (e: Exception) {
+            log.warn("stats: {}", e.message)
+            null
+        }
+        if (s == null) {
+            telegram.sendMessage(chatId, "Сначала привяжи аккаунт: /start")
+            return
+        }
+        val topics = if (s.weakestTopics.isEmpty()) {
+            "Пока нет данных — начни с /practice!"
+        } else {
+            s.weakestTopics.joinToString("\n") { "  \u2022 ${it.title} — ${it.confidencePercent}%" }
+        }
+        val text = "\uD83D\uDCCA Твой прогресс\n\n" +
+            "Ответов всего: ${s.answeredTotal}\n" +
+            "Серия дней: ${s.streakDays}\n" +
+            "Готовность к собеседованию: ${s.readinessPercent}%\n\n" +
+            "Слабые темы:\n$topics\n\n" +
+            "Подробности и карта знаний — на дашборде:"
+        telegram.sendMessage(
+            chatId,
+            text,
+            """{"inline_keyboard":[[{"text":"Открыть дашборд","url":"$webBaseUrl/dashboard"}]]}"""
+        )
+    }
+
+    /** Нажатие кнопки самооценки. */
+    private fun onCallback(callback: JsonNode) {
+        val data = callback["data"]?.asText() ?: return
+        val chatId = callback["message"]?.get("chat")?.get("id")?.asLong() ?: return
+        val telegramId = callback["from"]["id"].asLong()
+        val callbackId = callback["id"].asText()
+
+        if (!data.startsWith("ans:")) {
+            telegram.answerCallbackQuery(callbackId)
+            return
+        }
+        val parts = data.split(":")
+        if (parts.size != 3) {
+            telegram.answerCallbackQuery(callbackId)
+            return
+        }
+        val rating = parts[1]
+        val questionId = parts[2].toLongOrNull() ?: run {
+            telegram.answerCallbackQuery(callbackId)
+            return
+        }
+
+        val ok = try {
+            api.answer(telegramId, questionId, rating)
+        } catch (e: Exception) {
+            log.warn("answer: {}", e.message)
+            false
+        }
+        if (!ok) {
+            telegram.answerCallbackQuery(callbackId, "Не получилось — попробуй позже")
+            return
+        }
+        telegram.answerCallbackQuery(callbackId, "Записал: $rating \u2192 следующее повторение по расписанию")
+        onPractice(chatId, telegramId) // следующая карточка
     }
 }
