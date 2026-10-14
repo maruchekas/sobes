@@ -14,4 +14,5 @@ interface QuestionRepository : JpaRepository<Question, Long> {
     fun findByDifficulty(difficulty: Difficulty, pageable: Pageable): Page<Question>
     fun findByCategorySlugAndDifficulty(slug: String, difficulty: Difficulty, pageable: Pageable): Page<Question>
     fun countByCategory(category: Category): Long
+    fun findByBodyContainingIgnoreCase(fragment: String, pageable: Pageable): Page<Question>
 }

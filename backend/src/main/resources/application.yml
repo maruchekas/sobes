@@ -59,6 +59,8 @@ sobes:
   bot:
     internal-secret: ${BOT_INTERNAL_SECRET:}
   web-base-url: ${WEB_BASE_URL:http://localhost:3000}
+  admin:
+    telegram-ids: ${ADMIN_TELEGRAM_IDS:}
   llm:
     api-key: ${LLM_API_KEY:}
     base-url: ${LLM_BASE_URL:https://api.deepseek.com}

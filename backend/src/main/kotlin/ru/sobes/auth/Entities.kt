@@ -23,6 +23,9 @@ class User(
 
     @Column(name = "last_seen_at")
     var lastSeenAt: Instant? = null,
+
+    @Column(name = "role", nullable = false, length = 16)
+    var role: String = "USER",
 )
 
 @Entity
