@@ -273,9 +273,9 @@ export default function InterviewPage() {
           </div>
         </div>
         {report.llmAvailable && report.llmAvgScore != null && (
-          <div className="rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm dark:border-brand-800 dark:bg-brand-900/20">
-            <span className="font-medium text-brand-700 dark:text-brand-300">LLM-оценка ответов: </span>
-            в среднем {report.llmAvgScore}/100 — разбор по каждому вопросу ниже.
+          <div className="rounded-xl border border-brand-300 bg-brand-600/10 p-4 text-sm text-ink-800 dark:border-brand-500 dark:bg-brand-900/40 dark:text-brand-50">
+            <span className="font-semibold text-brand-700 dark:text-brand-200">LLM-оценка ответов: </span>
+            в среднем <span className="font-semibold">{report.llmAvgScore}/100</span> — разбор по каждому вопросу ниже.
           </div>
         )}
         {report.weakCategories.length > 0 && (
