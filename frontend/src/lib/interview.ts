@@ -26,6 +26,10 @@ export interface ReportItemDto {
   userTextLength: number;
   referenceAnswer: string;
   followup: string | null;
+  llmScore?: number | null;
+  llmCovered?: string | null;
+  llmMissing?: string | null;
+  llmVerdict?: string | null;
 }
 
 export interface ReportDto {
@@ -36,6 +40,8 @@ export interface ReportDto {
   byRating: Record<string, number>;
   weakCategories: string[];
   items: ReportItemDto[];
+  llmAvailable?: boolean;
+  llmAvgScore?: number | null;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";

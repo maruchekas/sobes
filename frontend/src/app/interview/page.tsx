@@ -272,6 +272,12 @@ export default function InterviewPage() {
             <div className="text-xs text-ink-500">уверенных ответов</div>
           </div>
         </div>
+        {report.llmAvailable && report.llmAvgScore != null && (
+          <div className="rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm dark:border-brand-800 dark:bg-brand-900/20">
+            <span className="font-medium text-brand-700 dark:text-brand-300">LLM-оценка ответов: </span>
+            в среднем {report.llmAvgScore}/100 — разбор по каждому вопросу ниже.
+          </div>
+        )}
         {report.weakCategories.length > 0 && (
           <p className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
             Слабые темы этой сессии: {report.weakCategories.join(", ")} — добавь их в практику.
@@ -290,6 +296,18 @@ export default function InterviewPage() {
                 <p className="text-ink-500">
                   {it.category} · {it.difficulty} · {it.secondsSpent}с · твой ответ: {it.userTextLength} симв.
                 </p>
+                {it.llmScore != null && (
+                  <div className="rounded-lg bg-brand-50 p-3 dark:bg-brand-900/30">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="rounded-full bg-brand-600 px-2 py-0.5 text-xs font-medium text-white">
+                        ИИ {it.llmScore}/100
+                      </span>
+                      <span className="text-xs text-ink-500">{it.llmVerdict}</span>
+                    </div>
+                    <p><strong>Раскрыл:</strong> {it.llmCovered}</p>
+                    <p><strong>Пропущено:</strong> {it.llmMissing}</p>
+                  </div>
+                )}
                 <div>
                   <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-600">Эталон</h4>
                   <div className="prose-answer">{it.referenceAnswer}</div>

@@ -47,6 +47,10 @@ data class ReportItemDto(
     val userTextLength: Int,
     val referenceAnswer: String,
     val followup: String?,
+    val llmScore: Int? = null,
+    val llmCovered: String? = null,
+    val llmMissing: String? = null,
+    val llmVerdict: String? = null,
 )
 
 data class ReportDto(
@@ -57,6 +61,8 @@ data class ReportDto(
     val byRating: Map<String, Int>,
     val weakCategories: List<String>,
     val items: List<ReportItemDto>,
+    val llmAvailable: Boolean = false,
+    val llmAvgScore: Int? = null,
 )
 
 /**
@@ -70,6 +76,7 @@ class InterviewService(
     private val answers: InterviewAnswerRepository,
     private val questions: QuestionService,
     private val practice: PracticeService,
+    private val evaluator: ru.sobes.interview.llm.AnswerEvaluator,
 ) {
     companion object {
         const val SECONDS_PER_QUESTION = 180
@@ -163,7 +170,11 @@ class InterviewService(
             throw ResponseStatusException(HttpStatus.CONFLICT, "Ответ вне порядка сессии")
         }
 
-        answers.save(
+        // Рейтинг интервью пишется в SM-2 — интервью двигает интервалы повторений.
+        practice.answer(userId, req.questionId, req.rating)
+
+        // LLM-разбор открытого ответа; null при недоступности — тихая деградация.
+        val saved = answers.save(
             InterviewAnswer(
                 sessionId = session.id,
                 questionId = req.questionId,
@@ -172,8 +183,19 @@ class InterviewService(
                 secondsSpent = req.secondsSpent.coerceIn(0, SECONDS_PER_QUESTION + 60),
             )
         )
-        // Рейтинг интервью пишется в SM-2 — интервью двигает интервалы повторений.
-        practice.answer(userId, req.questionId, req.rating)
+        if (req.userText.isNotBlank()) {
+            val q = questions.byId(req.questionId)
+            if (q != null) {
+                val evaluation = evaluator.evaluate(q.body, q.answer, req.userText)
+                if (evaluation != null) {
+                    saved.llmScore = evaluation.score
+                    saved.llmCovered = evaluation.covered
+                    saved.llmMissing = evaluation.missing
+                    saved.llmVerdict = evaluation.verdict
+                    // поля обновятся при коммите транзакции (dirty checking)
+                }
+            }
+        }
 
         val done = answers.countBySessionId(session.id)
         if (done >= ids.size) finishInternal(session)
@@ -207,6 +229,10 @@ class InterviewService(
                 userTextLength = a.userText.length,
                 referenceAnswer = q.answer,
                 followup = q.followup,
+                llmScore = a.llmScore,
+                llmCovered = a.llmCovered,
+                llmMissing = a.llmMissing,
+                llmVerdict = a.llmVerdict,
             )
         }
         val byRating = items.groupingBy { it.rating }.eachCount()
@@ -215,6 +241,7 @@ class InterviewService(
             .map { it.key to it.value.size }
             .sortedByDescending { it.second }
             .map { it.first }
+        val scored = items.mapNotNull { it.llmScore }
         return ReportDto(
             sessionId = session.id,
             total = session.total,
@@ -223,6 +250,8 @@ class InterviewService(
             byRating = byRating,
             weakCategories = weak,
             items = items,
+            llmAvailable = scored.isNotEmpty(),
+            llmAvgScore = if (scored.isEmpty()) null else scored.sum() / scored.size,
         )
     }
 

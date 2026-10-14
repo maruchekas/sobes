@@ -59,4 +59,17 @@ class InterviewAnswer(
 
     @Column(name = "answered_at", nullable = false)
     val answeredAt: Instant = Instant.now(),
+
+    // LLM-разбор (SOBES-28); null — оценка не выполнялась.
+    @Column(name = "llm_score")
+    var llmScore: Int? = null,
+
+    @Column(name = "llm_covered")
+    var llmCovered: String? = null,
+
+    @Column(name = "llm_missing")
+    var llmMissing: String? = null,
+
+    @Column(name = "llm_verdict")
+    var llmVerdict: String? = null,
 )
