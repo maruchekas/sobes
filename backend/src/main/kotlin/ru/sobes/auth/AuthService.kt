@@ -67,6 +67,7 @@ class AuthService(
         id = id,
         displayName = displayName,
         telegramUsername = account?.username,
+        role = role,
         createdAt = createdAt,
     )
 }

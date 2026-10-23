@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthButton } from "@/components/AuthButton";
+import { AdminLink } from "@/components/AdminLink";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -36,9 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/interview" className="hover:text-brand-600">
                 Интервью
               </Link>
-              <Link href="/admin" className="hover:text-brand-600">
-                Админка
-              </Link>
+              <AdminLink />
               <AuthButton />
               <a
                 href="https://github.com/maruchekas/sobes"
