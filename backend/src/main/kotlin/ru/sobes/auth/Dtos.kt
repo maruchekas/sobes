@@ -17,6 +17,7 @@ data class UserView(
     val id: Long,
     val displayName: String,
     val telegramUsername: String?,
+    val role: String,
     val createdAt: Instant,
 )
 

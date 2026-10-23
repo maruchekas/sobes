@@ -4,6 +4,7 @@ export interface UserView {
   id: number;
   displayName: string;
   telegramUsername: string | null;
+  role: string;
   createdAt: string;
 }
 

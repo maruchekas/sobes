@@ -5,7 +5,7 @@ import { clearSession, fetchMe, getToken } from "@/lib/auth";
 import type { UserView } from "@/lib/auth";
 
 /** Индикатор сессии для хедера: «…» / «Войти» / имя-ссылка в кабинет. */
-export function AuthButton() {
+export function AuthButton({ onRole }: { onRole?: (role: string | null) => void }) {
   const [user, setUser] = useState<UserView | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -16,10 +16,14 @@ export function AuthButton() {
       return;
     }
     fetchMe(token)
-      .then(setUser)
+      .then((u) => {
+        setUser(u);
+        onRole?.(u.role);
+      })
       .catch(() => {
         clearSession();
         setUser(null);
+        onRole?.(null);
       })
       .finally(() => setLoading(false));
   }, []);

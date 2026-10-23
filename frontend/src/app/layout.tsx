@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthButton } from "@/components/AuthButton";
+import { AdminLink } from "@/components/AdminLink";
+import { NavLink } from "@/components/NavLink";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,16 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Sobes
             </Link>
             <div className="flex items-center gap-6 text-sm">
-              <Link href="/questions" className="hover:text-brand-600">
-                Вопросы
-              </Link>
-              <Link href="/practice" className="font-medium text-brand-600 hover:text-brand-700">
-                Практика
-              </Link>
-              <Link href="/interview" className="hover:text-brand-600">
-                Интервью
-                <Link href="/admin" className="text-sm text-ink-500 hover:text-ink-900 dark:hover:text-white">Админка</Link>
-              </Link>
+              <NavLink href="/questions">Вопросы</NavLink>
+              <NavLink href="/practice">Практика</NavLink>
+              <NavLink href="/interview">Интервью</NavLink>
+              <AdminLink />
               <AuthButton />
               <a
                 href="https://github.com/maruchekas/sobes"
