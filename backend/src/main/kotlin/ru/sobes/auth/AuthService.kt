@@ -11,7 +11,10 @@ class AuthService(
     private val jwtService: JwtService,
     private val users: UserRepository,
     private val telegramAccounts: TelegramAccountRepository,
+    @org.springframework.beans.factory.annotation.Value("\${sobes.admin.telegram-ids:}") private val adminTelegramIds: String,
 ) {
+    private fun isAdminTelegramId(id: Long): Boolean =
+        adminTelegramIds.split(",").map { it.trim() }.any { it.toLongOrNull() == id }
     @Transactional
     fun loginByTelegram(params: Map<String, String>): LoginResponse {
         val auth = verifier.verify(params)
@@ -27,9 +30,14 @@ class AuthService(
             user.lastSeenAt = Instant.now()
             val freshName = displayName(auth)
             if (freshName.isNotBlank()) user.displayName = freshName
+            // Роль актуализируется при входе: назначил себя админом в env — стал админом.
+            user.role = if (isAdminTelegramId(auth.id)) "ADMIN" else user.role
         } else {
             user = users.save(
-                User(displayName = displayName(auth).ifBlank { "Пользователь ${auth.id}" })
+                User(
+                    displayName = displayName(auth).ifBlank { "Пользователь ${auth.id}" },
+                    role = if (isAdminTelegramId(auth.id)) "ADMIN" else "USER",
+                )
             )
             account = telegramAccounts.save(
                 TelegramAccount(

@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import ru.sobes.auth.UnauthorizedException
+import ru.sobes.admin.Forbidden
 
 /** Глобальные HTTP-маппины: 401/400 без stacktrace в ответе, для всех контроллеров. */
 @RestControllerAdvice
@@ -17,4 +18,8 @@ class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun badRequest(e: IllegalArgumentException) = mapOf("error" to (e.message ?: "bad_request"))
+
+    @ExceptionHandler(Forbidden::class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    fun forbidden() = mapOf("error" to "forbidden")
 }
