@@ -35,7 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
               <Link href="/interview" className="hover:text-brand-600">
                 Интервью
-                <Link href="/admin" className="text-sm text-ink-500 hover:text-ink-900 dark:hover:text-white">Админка</Link>
+              </Link>
+              <Link href="/admin" className="hover:text-brand-600">
+                Админка
               </Link>
               <AuthButton />
               <a
