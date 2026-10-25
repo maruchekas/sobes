@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException
 @RestController
 @RequestMapping("/api/v1/bot/internal")
 class DailyInternalController(
+    private val metrics: ru.sobes.observability.SobesMetrics,
     private val dailyDigestService: DailyDigestService,
     @Value("\${sobes.bot.internal-secret:}") private val internalSecret: String,
 ) {
@@ -30,6 +31,8 @@ class DailyInternalController(
         if (botSecret != internalSecret) {
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED)
         }
-        return dailyDigestService.nextBatch(minOf(limit, 200))
+        val batch = dailyDigestService.nextBatch(minOf(limit, 200))
+        repeat(batch.size) { metrics.botDaily() }
+        return batch
     }
 }

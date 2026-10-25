@@ -12,6 +12,7 @@ import java.time.Instant
 /** Сессия практики: очередь due+новых и приём самооценок. */
 @Service
 class PracticeService(
+    private val metrics: ru.sobes.observability.SobesMetrics,
     private val schedules: ReviewScheduleRepository,
     private val answers: UserAnswerRepository,
     private val questions: QuestionRepository,
@@ -50,6 +51,7 @@ class PracticeService(
         answers.save(
             UserAnswer(userId = userId, questionId = questionId, selfRating = rating.name)
         )
+        metrics.answer(0)
 
         return AnswerResult(
             questionId = questionId,

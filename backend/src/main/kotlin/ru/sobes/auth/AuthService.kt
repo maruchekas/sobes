@@ -7,6 +7,7 @@ import java.time.Instant
 /** Регистрация/вход по Telegram-данным, выдача JWT. */
 @Service
 class AuthService(
+    private val metrics: ru.sobes.observability.SobesMetrics,
     private val verifier: TelegramLoginVerifier,
     private val jwtService: JwtService,
     private val users: UserRepository,
@@ -33,6 +34,7 @@ class AuthService(
             // Роль актуализируется при входе: назначил себя админом в env — стал админом.
             user.role = if (isAdminTelegramId(auth.id)) "ADMIN" else user.role
         } else {
+            metrics.registration()
             user = users.save(
                 User(
                     displayName = displayName(auth).ifBlank { "Пользователь ${auth.id}" },

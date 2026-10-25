@@ -1,0 +1,85 @@
+{
+  "title": "Sobes — обзор",
+  "uid": "sobes-overview",
+  "tags": ["sobes"],
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Новые пользователи (24ч)",
+      "gridPos": { "h": 5, "w": 5, "x": 0, "y": 0 },
+      "targets": [{ "expr": "increase(sobes_registrations_total[24h])", "refId": "A" }]
+    },
+    {
+      "id": 2, "type": "stat", "title": "Ответы практики (24ч)",
+      "gridPos": { "h": 5, "w": 5, "x": 5, "y": 0 },
+      "targets": [{ "expr": "increase(sobes_answers_total[24h])", "refId": "A" }]
+    },
+    {
+      "id": 3, "type": "stat", "title": "Интервью начаты (24ч)",
+      "gridPos": { "h": 5, "w": 5, "x": 10, "y": 0 },
+      "targets": [{ "expr": "increase(sobes_interviews_total[24h])", "refId": "A" }]
+    },
+    {
+      "id": 4, "type": "stat", "title": "LLM-оценки (24ч)",
+      "gridPos": { "h": 5, "w": 4, "x": 15, "y": 0 },
+      "targets": [{ "expr": "increase(sobes_llm_evaluations_total[24h])", "refId": "A" }]
+    },
+    {
+      "id": 5, "type": "stat", "title": "LLM-сбои (24ч)",
+      "gridPos": { "h": 5, "w": 5, "x": 19, "y": 0 },
+      "targets": [{ "expr": "increase(sobes_llm_failures_total[24h])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null }, { "color": "red", "value": 10 } ] } }, "overrides": [] }
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "HTTP: RPS по эндпоинтам",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count[5m])) by (uri)", "legendFormat": "{{uri}}", "refId": "A" }]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "HTTP: p95 латентность",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, uri))", "legendFormat": "{{uri}}", "refId": "A" }]
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "Ошибки 5xx (RPS)",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 13 },
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "reqps", "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null }, { "color": "red", "value": 0.5 } ] } }, "overrides": [] }
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "LLM: длительность p50/p95",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 13 },
+      "targets": [
+        { "expr": "sobes_llm_seconds{quantile=\"0.5\"}", "legendFormat": "p50", "refId": "A" },
+        { "expr": "sobes_llm_seconds{quantile=\"0.95\"}", "legendFormat": "p95", "refId": "B" }
+      ]
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "JVM: heap после GC",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 13 },
+      "targets": [{ "expr": "jvm_memory_used_bytes{area=\"heap\"}", "legendFormat": "{{id}}", "refId": "A" }]
+    },
+    {
+      "id": 11, "type": "timeseries", "title": "Бот: доставки вопроса дня / напоминания",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 20 },
+      "targets": [
+        { "expr": "increase(sobes_bot_daily_delivered_total[1h])", "legendFormat": "вопрос дня", "refId": "A" },
+        { "expr": "increase(sobes_bot_reminders_total[1h])", "legendFormat": "напоминания", "refId": "B" }
+      ]
+    },
+    {
+      "id": 12, "type": "timeseries", "title": "HikariCP: активные / ожидание",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 20 },
+      "targets": [
+        { "expr": "hikaricp_connections_active", "legendFormat": "active", "refId": "A" },
+        { "expr": "hikaricp_connections_pending", "legendFormat": "pending", "refId": "B" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

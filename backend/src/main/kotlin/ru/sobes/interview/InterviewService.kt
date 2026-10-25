@@ -71,6 +71,7 @@ data class ReportDto(
  */
 @Service
 class InterviewService(
+    private val metrics: ru.sobes.observability.SobesMetrics,
     private val em: EntityManager,
     private val sessions: InterviewSessionRepository,
     private val answers: InterviewAnswerRepository,
@@ -94,6 +95,7 @@ class InterviewService(
         val session = sessions.save(
             InterviewSession(userId = userId, categories = cats, total = total)
         )
+        metrics.interviewStarted()
         return state(session)
     }
 
@@ -186,8 +188,12 @@ class InterviewService(
         if (req.userText.isNotBlank()) {
             val q = questions.byId(req.questionId)
             if (q != null) {
-                val evaluation = evaluator.evaluate(q.body, q.answer, req.userText)
+                val t0 = System.nanoTime()
+                val evaluation = runCatching { evaluator.evaluate(q.body, q.answer, req.userText) }
+                    .onFailure { metrics.llmFailed() }
+                    .getOrNull()
                 if (evaluation != null) {
+                    metrics.llmEvaluated((System.nanoTime() - t0) / 1_000_000)
                     saved.llmScore = evaluation.score
                     saved.llmCovered = evaluation.covered
                     saved.llmMissing = evaluation.missing

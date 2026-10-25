@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException
 @RestController
 @RequestMapping("/api/v1/bot/internal")
 class ReminderInternalController(
+    private val metrics: ru.sobes.observability.SobesMetrics,
     private val reminderService: ReviewReminderService,
     @Value("\${sobes.bot.internal-secret:}") private val internalSecret: String,
 ) {
@@ -27,6 +28,8 @@ class ReminderInternalController(
         if (botSecret != internalSecret) {
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED)
         }
-        return reminderService.nextBatch(minOf(limit, 200))
+        val batch = reminderService.nextBatch(minOf(limit, 200))
+        repeat(batch.size) { metrics.botReminder() }
+        return batch
     }
 }
